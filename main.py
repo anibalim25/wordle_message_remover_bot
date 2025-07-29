@@ -22,7 +22,7 @@ async def on_ready():
         print("No se encontró el canal")
         return
     def filtro(mensaje):
-        return mensaje.author.bot and ("was playing" in mensaje.content or "were playing" in mensaje.content)
+        return mensaje.author.bot and "playing" in mensaje.content
 
     print("Borrando mensajes antiguos...")
     deleted = await channel.purge(limit=100, check=filtro)
@@ -34,7 +34,7 @@ async def on_message(message):
     if message.channel.id != CANAL_OBJETIVO_ID:
         return
 
-    if message.author.bot and ("was playing" in message.content or "were playing" in message.content):
+    if message.author.bot and "playing" in message.content:
         try:
             await message.delete()
             print(f'Mensaje eliminado: {message.content[:40]}...')
