@@ -1,4 +1,5 @@
 import discord
+import logging
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
@@ -7,6 +8,9 @@ import aiohttp
 from keep_alive import run_webserver
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("bot")
 
 TOKEN = os.getenv('TOKEN')  # TOKEN del bot de discord
 CANAL_OBJETIVO_ID = int(os.getenv('CANAL_ID'))  # ID del canal de discord del que quieres borrar mensajes
@@ -20,10 +24,10 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f'Bot conectado como {bot.user}')
+    logger.info(f'Bot conectado como {bot.user}')
     channel = bot.get_channel(CANAL_OBJETIVO_ID)
     if channel is None:
-        print("No se encontró el canal")
+        logger.warning("No se encontró el canal")
         return
     def filtro(mensaje):
         return mensaje.author.bot and "playing" in mensaje.content
@@ -41,24 +45,24 @@ async def on_message(message):
     if message.author.bot and "playing" in message.content:
         try:
             await message.delete()
-            print(f'Mensaje eliminado: {message.content[:40]}...')
+            logger.info(f'Mensaje eliminado: {message.content[:40]}...')
         except Exception as e:
-            print(f'Error al eliminar mensaje: {e}')
+            logger.warning(f'Error al eliminar mensaje: {e}')
 
     await bot.process_commands(message) #permite que siga procesando mensajes, de momento no hace falta
 
 async def keep_awake():
     if not KEEP_ALIVE_URL:
-        print("KEEP_ALIVE_URL no configurado, auto-pings desactivados.")
+        logger.warning("KEEP_ALIVE_URL no configurado, auto-pings desactivados.")
         return
 
     while True:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(KEEP_ALIVE_URL) as resp:
-                    print(f"🔄 Auto-ping enviado, status: {resp.status}")
+                    logger.info(f"🔄 Auto-ping enviado, status: {resp.status}")
         except Exception as e:
-            print(f"Error en auto-ping: {e}")
+            logger.warning(f"Error en auto-ping: {e}")
 
         await asyncio.sleep(300)
 
@@ -71,6 +75,6 @@ async def main():
 
 if __name__ == "__main__":
     if not TOKEN:
-        print("No se encontró el TOKEN en las variables de entorno")
+        logger.warning("No se encontró el TOKEN en las variables de entorno")
     else:
         asyncio.run(main())
